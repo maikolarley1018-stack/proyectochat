@@ -15,16 +15,14 @@ app.use(express.static(path.join(__dirname, 'public')));
 require('./sockets')(io);
 
 // ===== CONEXIÓN A MONGODB =====
-mongoose.connect('mongodb://127.0.0.1:27017/chat-database', {
-    useNewUrlParser: true,
-    useUnifiedTopology: true
-})
+const dbURI = process.env.MONGODB_URI || 'mongodb://127.0.0.1:27017/chat-database'
+mongoose.connect(dbURI)
 .then(() => console.log('🟢 Base de datos conectada'))
 .catch(err => console.log('🔴 Error en DB:', err));
 
 // ===== SERVIDOR =====
 const PORT = process.env.PORT || 3000;
 
-httpServer.listen(PORT, () => {
-    console.log(`🚀 Servidor corriendo en http://localhost:${PORT}`);
+httpServer.listen(app.get('port'), '0.0.0.0', () => {
+    console.log("Servidor en el puerto", app.get('port'));
 });
