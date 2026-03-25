@@ -12,21 +12,64 @@ const io = new Server(httpServer);
 app.use(express.static(path.join(__dirname, 'public')));
 
 // ===== CONEXIÓN A MONGODB =====
-const dbURI = process.env.MONGODB_URI || 'mongodb://127.0.0.1:27017/chat-database';
+// La variable MONGODB_URI debe estar configurada en Render (Environment Variables)
+const dbURI = process.env.MONGODB_URI;
 
-mongoose.connect(dbURI)
-.then(() => {
-    console.log('🟢 Base de datos conectada');
+// Verificar que la URI existe
+if (!dbURI) {
+    console.error('❌ Error: MONGODB_URI no está configurada en las variables de entorno');
+    console.log('💡 Debes agregar MONGODB_URI en Render → Environment Variables');
+    process.exit(1); // Detiene el servidor si no hay URI
+}
 
-    // 🔥 IMPORTANTE: sockets después de conectar DB
-    require('./sockets')(io);
+// Opciones para evitar warnings en consola
+const mongooseOptions = {
+    useNewUrlParser: true,
+    useUnifiedTopology: true,
+    serverSelectionTimeoutMS: 5000, // Timeout de 5 segundos
+};
 
-    // ===== SERVIDOR =====
-    const PORT = process.env.PORT || 3000;
+mongoose.connect(dbURI, mongooseOptions)
+    .then(() => {
+        console.log('🟢 Base de datos conectada exitosamente');
+        console.log(`📊 Base de datos: ${mongoose.connection.name}`);
+        console.log(`📍 Host: ${mongoose.connection.host}`);
+        
+        // Inicializar sockets DESPUÉS de conectar la base de datos
+        require('./sockets')(io);
 
-    httpServer.listen(PORT, '0.0.0.0', () => {
-        console.log("🚀 Servidor en el puerto", PORT);
+        // ===== SERVIDOR =====
+        const PORT = process.env.PORT || 3000;
+        
+        httpServer.listen(PORT, '0.0.0.0', () => {
+            console.log("🚀 Servidor corriendo en el puerto", PORT);
+            console.log(`🔗 Accede en: http://localhost:${PORT} o en tu URL de Render`);
+        });
+
+    })
+    .catch(err => {
+        console.error('🔴 Error de conexión a MongoDB:');
+        console.error(`   Mensaje: ${err.message}`);
+        
+        // Mostrar ayuda si es error de autenticación
+        if (err.message.includes('bad auth') || err.message.includes('Authentication failed')) {
+            console.error('💡 Posible solución: Verifica usuario y contraseña en MONGODB_URI');
+        }
+        
+        // Mostrar ayuda si es error de red
+        if (err.message.includes('ENOTFOUND') || err.message.includes('getaddrinfo')) {
+            console.error('💡 Posible solución: Verifica que la URI de MongoDB sea correcta');
+        }
+        
+        process.exit(1);
     });
 
-})
-.catch(err => console.log('🔴 Error en DB:', err));
+// ===== MANEJO DE CIERRE GRACIOSO =====
+// Esto asegura que la conexión se cierre correctamente al detener el servidor
+process.on('SIGINT', () => {
+    console.log('🛑 Cerrando servidor...');
+    mongoose.connection.close(() => {
+        console.log('📴 Conexión a MongoDB cerrada');
+        process.exit(0);
+    });
+});
