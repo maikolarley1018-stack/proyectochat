@@ -1,3 +1,6 @@
+// Cargar variables de entorno desde .env (especificando ruta)
+require('dotenv').config({ path: './.env' });
+
 const express = require('express');
 const path = require('path');
 const { createServer } = require('http');
@@ -14,19 +17,18 @@ app.use(express.static(path.join(__dirname, 'public')));
 // ===== CONEXIÓN A MONGODB =====
 const dbURI = process.env.MONGODB_URI;
 
-// Verificar que la URI existe
+console.log('🔍 MONGODB_URI:', dbURI ? '✅ Configurada' : '❌ No configurada');
+
 if (!dbURI) {
     console.error('❌ Error: MONGODB_URI no está configurada');
+    console.log('💡 Crea un archivo .env con MONGODB_URI=mongodb://127.0.0.1:27017/chat-database');
+    console.log('📁 El archivo .env debe estar en:', __dirname);
     process.exit(1);
 }
 
-// ✅ CORRECCIÓN: Eliminar las opciones obsoletas
-// Las versiones nuevas de Mongoose ya no necesitan useNewUrlParser ni useUnifiedTopology
 mongoose.connect(dbURI)
     .then(() => {
         console.log('🟢 Base de datos conectada exitosamente');
-        
-        // Inicializar sockets DESPUÉS de conectar la base de datos
         require('./sockets')(io);
 
         const PORT = process.env.PORT || 3000;
@@ -40,12 +42,3 @@ mongoose.connect(dbURI)
         console.error('🔴 Error de conexión:', err.message);
         process.exit(1);
     });
-
-// Manejo de cierre gracioso
-process.on('SIGINT', () => {
-    console.log('🛑 Cerrando servidor...');
-    mongoose.connection.close(() => {
-        console.log('📴 Conexión cerrada');
-        process.exit(0);
-    });
-});
