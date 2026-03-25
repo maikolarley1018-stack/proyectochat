@@ -1,0 +1,39 @@
+body {
+    background-color: #0dcee7;
+}
+
+#messages {
+    list-style-type: none;
+    margin: 0;
+    padding: 0;
+    background-color: #f9f9f9;
+}
+
+#messages li {
+    padding: 5px 10px;
+    margin-bottom: 5px;
+    border-radius: 5px;
+}
+
+.message-user {
+    background-color: #e2f0ff;
+    text-align: left;
+}
+
+.message-system {
+    background-color: #e0e0e0;
+    font-style: italic;
+    color: #555;
+    text-align: center;
+    font-size: 0.9em;
+}
+
+#user-list i {
+    margin-right: 8px;
+    color: #007bff;
+}
+
+.user-list-item {
+    padding: 5px 8px;
+    border-bottom: 1px solid #eee;
+}
