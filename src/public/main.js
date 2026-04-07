@@ -20,12 +20,20 @@ $(function () {
     $nicknameForm.submit(e => {
         e.preventDefault();
 
-        socket.emit('new user', $nicknameInput.val(), data => {
+        const nickname = $nicknameInput.val().trim();
+
+        // 🔴 VALIDACIÓN
+        if (nickname === '') {
+            $nicknameError.removeClass('d-none').text('El nombre no puede estar vacío');
+            return;
+        }
+
+        socket.emit('new user', nickname, data => {
             if (data) {
                 $nicknameContainer.addClass('d-none');
                 $chatContainer.removeClass('d-none');
             } else {
-                $nicknameError.removeClass('d-none').text('Ese usuario ya existe');
+                $nicknameError.removeClass('d-none').text('Ese usuario ya existe o es inválido');
             }
         });
 

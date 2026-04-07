@@ -18,12 +18,20 @@ module.exports = (io) => {
 
         // ===== NUEVO USUARIO =====
         socket.on('new user', (data, cb) => {
-            if (data in users) {
+
+            const nickname = data.trim();
+
+            // 🔴 VALIDACIÓN (NO PERMITE ESPACIOS)
+            if (nickname === '') {
+                return cb(false);
+            }
+
+            if (nickname in users) {
                 cb(false);
             } else {
                 cb(true);
 
-                socket.nickname = data;
+                socket.nickname = nickname;
                 socket.color = colors[Math.floor(Math.random() * colors.length)];
 
                 users[socket.nickname] = socket;
